@@ -1,0 +1,155 @@
+package net.minecraft.item;
+
+import com.google.common.collect.Maps;
+import java.util.Map;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.MobEffects;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.NonNullList;
+import net.minecraft.world.World;
+
+public class ItemFishFood extends ItemFood {
+  private final boolean cooked;
+  
+  public ItemFishFood(boolean cooked) {
+    super(0, 0.0F, false);
+    this.cooked = cooked;
+  }
+  
+  public int getHealAmount(ItemStack stack) {
+    FishType itemfishfood$fishtype = FishType.byItemStack(stack);
+    return (this.cooked && itemfishfood$fishtype.canCook()) ? itemfishfood$fishtype.getCookedHealAmount() : itemfishfood$fishtype.getUncookedHealAmount();
+  }
+  
+  public float getSaturationModifier(ItemStack stack) {
+    FishType itemfishfood$fishtype = FishType.byItemStack(stack);
+    return (this.cooked && itemfishfood$fishtype.canCook()) ? itemfishfood$fishtype.getCookedSaturationModifier() : itemfishfood$fishtype.getUncookedSaturationModifier();
+  }
+  
+  protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
+    FishType itemfishfood$fishtype = FishType.byItemStack(stack);
+    if (itemfishfood$fishtype == FishType.PUFFERFISH) {
+      player.addPotionEffect(new PotionEffect(MobEffects.POISON, 1200, 3));
+      player.addPotionEffect(new PotionEffect(MobEffects.HUNGER, 300, 2));
+      player.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, 300, 1));
+    } 
+    super.onFoodEaten(stack, worldIn, player);
+  }
+  
+  public void getSubItems(CreativeTabs itemIn, NonNullList<ItemStack> tab) {
+    if (func_194125_a(itemIn)) {
+      byte b;
+      int i;
+      FishType[] arrayOfFishType;
+      for (i = (arrayOfFishType = FishType.values()).length, b = 0; b < i; ) {
+        FishType itemfishfood$fishtype = arrayOfFishType[b];
+        if (!this.cooked || itemfishfood$fishtype.canCook())
+          tab.add(new ItemStack(this, 1, itemfishfood$fishtype.getMetadata())); 
+        b++;
+      } 
+    } 
+  }
+  
+  public String getUnlocalizedName(ItemStack stack) {
+    FishType itemfishfood$fishtype = FishType.byItemStack(stack);
+    return String.valueOf(getUnlocalizedName()) + "." + itemfishfood$fishtype.getUnlocalizedName() + "." + ((this.cooked && itemfishfood$fishtype.canCook()) ? "cooked" : "raw");
+  }
+  
+  public enum FishType {
+    COD(0, "cod", 2, 0.1F, 5, 0.6F),
+    SALMON(1, "salmon", 2, 0.1F, 6, 0.8F),
+    CLOWNFISH(2, "clownfish", 1, 0.1F),
+    PUFFERFISH(3, "pufferfish", 1, 0.1F);
+    
+    private static final Map<Integer, FishType> META_LOOKUP = Maps.newHashMap();
+    
+    private final int meta;
+    
+    private final String unlocalizedName;
+    
+    private final int uncookedHealAmount;
+    
+    private final float uncookedSaturationModifier;
+    
+    private final int cookedHealAmount;
+    
+    private final float cookedSaturationModifier;
+    
+    private final boolean cookable;
+    
+    static {
+      byte b;
+      int i;
+      FishType[] arrayOfFishType;
+      for (i = (arrayOfFishType = values()).length, b = 0; b < i; ) {
+        FishType itemfishfood$fishtype = arrayOfFishType[b];
+        META_LOOKUP.put(Integer.valueOf(itemfishfood$fishtype.getMetadata()), itemfishfood$fishtype);
+        b++;
+      } 
+    }
+    
+    FishType(int meta, String unlocalizedName, int uncookedHeal, float uncookedSaturation, int cookedHeal, float cookedSaturation) {
+      this.meta = meta;
+      this.unlocalizedName = unlocalizedName;
+      this.uncookedHealAmount = uncookedHeal;
+      this.uncookedSaturationModifier = uncookedSaturation;
+      this.cookedHealAmount = cookedHeal;
+      this.cookedSaturationModifier = cookedSaturation;
+      this.cookable = true;
+    }
+    
+    FishType(int meta, String unlocalizedName, int uncookedHeal, float uncookedSaturation) {
+      this.meta = meta;
+      this.unlocalizedName = unlocalizedName;
+      this.uncookedHealAmount = uncookedHeal;
+      this.uncookedSaturationModifier = uncookedSaturation;
+      this.cookedHealAmount = 0;
+      this.cookedSaturationModifier = 0.0F;
+      this.cookable = false;
+    }
+    
+    public int getMetadata() {
+      return this.meta;
+    }
+    
+    public String getUnlocalizedName() {
+      return this.unlocalizedName;
+    }
+    
+    public int getUncookedHealAmount() {
+      return this.uncookedHealAmount;
+    }
+    
+    public float getUncookedSaturationModifier() {
+      return this.uncookedSaturationModifier;
+    }
+    
+    public int getCookedHealAmount() {
+      return this.cookedHealAmount;
+    }
+    
+    public float getCookedSaturationModifier() {
+      return this.cookedSaturationModifier;
+    }
+    
+    public boolean canCook() {
+      return this.cookable;
+    }
+    
+    public static FishType byMetadata(int meta) {
+      FishType itemfishfood$fishtype = META_LOOKUP.get(Integer.valueOf(meta));
+      return (itemfishfood$fishtype == null) ? COD : itemfishfood$fishtype;
+    }
+    
+    public static FishType byItemStack(ItemStack stack) {
+      return (stack.getItem() instanceof ItemFishFood) ? byMetadata(stack.getMetadata()) : COD;
+    }
+  }
+}
+
+
+/* Location:              C:\Users\BSV\AppData\Local\Temp\Rar$DRa6216.20396\Preview\Preview.jar!\net\minecraft\item\ItemFishFood.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       1.1.3
+ */

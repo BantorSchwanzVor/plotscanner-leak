@@ -1,0 +1,84 @@
+package net.minecraft.command;
+
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+
+public class CommandGive extends CommandBase {
+  public String getCommandName() {
+    return "give";
+  }
+  
+  public int getRequiredPermissionLevel() {
+    return 2;
+  }
+  
+  public String getCommandUsage(ICommandSender sender) {
+    return "commands.give.usage";
+  }
+  
+  public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+    if (args.length < 2)
+      throw new WrongUsageException("commands.give.usage", new Object[0]); 
+    EntityPlayerMP entityPlayerMP = getPlayer(server, sender, args[0]);
+    Item item = getItemByText(sender, args[1]);
+    int i = (args.length >= 3) ? parseInt(args[2], 1, item.getItemStackLimit()) : 1;
+    int j = (args.length >= 4) ? parseInt(args[3]) : 0;
+    ItemStack itemstack = new ItemStack(item, i, j);
+    if (args.length >= 5) {
+      String s = buildString(args, 4);
+      try {
+        itemstack.setTagCompound(JsonToNBT.getTagFromJson(s));
+      } catch (NBTException nbtexception) {
+        throw new CommandException("commands.give.tagError", new Object[] { nbtexception.getMessage() });
+      } 
+    } 
+    boolean flag = ((EntityPlayer)entityPlayerMP).inventory.addItemStackToInventory(itemstack);
+    if (flag) {
+      ((EntityPlayer)entityPlayerMP).world.playSound(null, ((EntityPlayer)entityPlayerMP).posX, ((EntityPlayer)entityPlayerMP).posY, ((EntityPlayer)entityPlayerMP).posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((entityPlayerMP.getRNG().nextFloat() - entityPlayerMP.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
+      ((EntityPlayer)entityPlayerMP).inventoryContainer.detectAndSendChanges();
+    } 
+    if (flag && itemstack.func_190926_b()) {
+      itemstack.func_190920_e(1);
+      sender.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, i);
+      EntityItem entityitem1 = entityPlayerMP.dropItem(itemstack, false);
+      if (entityitem1 != null)
+        entityitem1.makeFakeItem(); 
+    } else {
+      sender.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, i - itemstack.func_190916_E());
+      EntityItem entityitem = entityPlayerMP.dropItem(itemstack, false);
+      if (entityitem != null) {
+        entityitem.setNoPickupDelay();
+        entityitem.setOwner(entityPlayerMP.getName());
+      } 
+    } 
+    notifyCommandListener(sender, this, "commands.give.success", new Object[] { itemstack.getTextComponent(), Integer.valueOf(i), entityPlayerMP.getName() });
+  }
+  
+  public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos) {
+    if (args.length == 1)
+      return getListOfStringsMatchingLastWord(args, server.getAllUsernames()); 
+    return (args.length == 2) ? getListOfStringsMatchingLastWord(args, Item.REGISTRY.getKeys()) : Collections.<String>emptyList();
+  }
+  
+  public boolean isUsernameIndex(String[] args, int index) {
+    return (index == 0);
+  }
+}
+
+
+/* Location:              C:\Users\BSV\AppData\Local\Temp\Rar$DRa6216.20396\Preview\Preview.jar!\net\minecraft\command\CommandGive.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       1.1.3
+ */

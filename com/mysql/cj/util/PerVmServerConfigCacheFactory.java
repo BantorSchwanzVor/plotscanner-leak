@@ -1,0 +1,44 @@
+package com.mysql.cj.util;
+
+import com.mysql.cj.CacheAdapter;
+import com.mysql.cj.CacheAdapterFactory;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String, Map<String, String>> {
+  static final ConcurrentHashMap<String, Map<String, String>> serverConfigByUrl = new ConcurrentHashMap<>();
+  
+  private static final CacheAdapter<String, Map<String, String>> serverConfigCache = new CacheAdapter<String, Map<String, String>>() {
+      public Map<String, String> get(String key) {
+        return PerVmServerConfigCacheFactory.serverConfigByUrl.get(key);
+      }
+      
+      public void put(String key, Map<String, String> value) {
+        PerVmServerConfigCacheFactory.serverConfigByUrl.putIfAbsent(key, value);
+      }
+      
+      public void invalidate(String key) {
+        PerVmServerConfigCacheFactory.serverConfigByUrl.remove(key);
+      }
+      
+      public void invalidateAll(Set<String> keys) {
+        for (String key : keys)
+          PerVmServerConfigCacheFactory.serverConfigByUrl.remove(key); 
+      }
+      
+      public void invalidateAll() {
+        PerVmServerConfigCacheFactory.serverConfigByUrl.clear();
+      }
+    };
+  
+  public CacheAdapter<String, Map<String, String>> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize) {
+    return serverConfigCache;
+  }
+}
+
+
+/* Location:              C:\Users\BSV\AppData\Local\Temp\Rar$DRa6216.20396\Preview\Preview.jar!\com\mysql\c\\util\PerVmServerConfigCacheFactory.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       1.1.3
+ */

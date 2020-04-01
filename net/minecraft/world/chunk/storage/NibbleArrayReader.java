@@ -1,0 +1,28 @@
+package net.minecraft.world.chunk.storage;
+
+public class NibbleArrayReader {
+  public final byte[] data;
+  
+  private final int depthBits;
+  
+  private final int depthBitsPlusFour;
+  
+  public NibbleArrayReader(byte[] dataIn, int depthBitsIn) {
+    this.data = dataIn;
+    this.depthBits = depthBitsIn;
+    this.depthBitsPlusFour = depthBitsIn + 4;
+  }
+  
+  public int get(int x, int y, int z) {
+    int i = x << this.depthBitsPlusFour | z << this.depthBits | y;
+    int j = i >> 1;
+    int k = i & 0x1;
+    return (k == 0) ? (this.data[j] & 0xF) : (this.data[j] >> 4 & 0xF);
+  }
+}
+
+
+/* Location:              C:\Users\BSV\AppData\Local\Temp\Rar$DRa6216.20396\Preview\Preview.jar!\net\minecraft\world\chunk\storage\NibbleArrayReader.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       1.1.3
+ */
